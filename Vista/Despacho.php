@@ -1,254 +1,203 @@
 <?php
 
-        require_once 'Modelo/Despacho.php';
-        require_once 'Controlador/Despacho.php';
-       
+require_once 'Modelo/Despacho.php';
+require_once 'Controlador/Despacho.php';
+
 
 ?>
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-  <link rel="stylesheet" href="Public/bootstrap/css/bootstrap.min.css">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
-    <link rel="stylesheet" href="Styles/darckort.css">
+    <?php include 'header.php'; ?>
+    <!-- <link rel="stylesheet" href="Styles/darckort.css">-->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <title>Gestionar Despachos</title>
 </head>
+
 <body>
+    <?php require_once("public/modal.php"); ?>
 
 
-<?php include 'NavBar.php'; ?>
+    <?php include 'NavBar.php'; ?>
 
 
-
-
-
-        <!--== INICIO DEL CONTENIDO ==-->
-
-    <div class="container formulario-1">
-
-        <!-- Mensaje de alerta -->
-        <?php if (isset($alert)) echo $alert; ?>
-            
-            <form action="" method="POST" class="">
-                <h3 class="display-4 text-center">INCLUIR DESPACHO</h3>
-
-		
-        </form>
-    
-<form action="" method="POST">
-    <div class="tab-content">
-
-	<div role="tabpanel" class="tab-pane active" id="factura">
-    
-		<div class="container-tab">
-
-        
-        <div class="row">
+    <div class="container text-center h2 text-primary" style="padding-top: 120px;">
+        Despacho
+        <hr />
+    </div>
+    <div class="container"> <!-- todo el contenido ira dentro de esta etiqueta-->
+        <form method="post" action="" id="f">
+            <input type="text" name="accion" id="accion" style="display:none" />
+            <div class="container">
+                <!-- FILA DE BOTONES -->
+                <div class=" row">
+                    <div class="col-md-4">
+                        <button type="button" class="btn btn-primary" id="registrar" name="registrar">Registrar</button>
+                    </div>
+                </div>
+                <!-- FIN DE FILA BOTONES -->
+                <div class="row">
                     <div class="col">
-                        <label class="form-label mt-4" for="nombre-cliente">Nombre del Cliente</label>
-                        <select class="form-select" id="nombre-cliente" name="nombre-cliente">
-                        <option value="">Seleccionar Cliente</option>
-                                <<?php foreach ($clientes as $cliente): ?>
-                                    <option value="<?php echo $cliente['id_clientes']; ?>"><?php echo $cliente['nombre']; ?></option>
-                                <?php endforeach; ?>
+                        <hr />
+                    </div>
+                </div>
+                <!-- FILA DE INPUT Y BUSCAR CLIENTE -->
+                <div class="row">
+
+                    <div class="row">
+                        <div class="col-md-8 input-group">
+                            <input class="form-control" type="text" id="nombre_p" name="nombre_p" />
+                            <input class="form-control" type="text" id="id_producto" name="id_producto" style="display:none" />
+                            <button type="button" class="btn btn-primary" id="listadodeproductos" name="listadodeproductos">LISTADO DE PRODUCTOS</button>
+                        </div>
+                    </div>
+                    <!-- FIN DE FILA BUSQUEDA DE PRODUCTOS -->
+                    <div class="row">
+                        <div class="col">
+                            <hr />
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="lote">Lotes</label>
+                        <select class="form-select" name="lote" id="lote">
+                            <option value='disabled'  
+                                disabled selected>Seleccione un lote</option>
+                            <?php
+                            foreach ($lotes as $lote) {
+                                echo "<option value='" . $lote['id_lote'] . "'>" . $lote['lote'] . "</option>";
+                            }
+                            ?>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="correlativo">Correlativo</label>
+                        <input class="form-control" type="text" id="correlativo" name="correlativo" />
+                    </div>
+
+                    <div class="col-md-4">
+                        <label for="cliente">Clientes</label>
+                        <select class="form-select" name="cliente" id="cliente">
+                            <option value='disabled'  
+                                disabled selected>Seleccione un cliente</option>
+                            <?php
+                            foreach ($clientes as $cliente) {
+                                echo "<option value='" . $cliente['id_clientes'] . "'>" . $cliente['nombre'] . "</option>";
+                            }
+                            ?>
                         </select>
                     </div>
                 </div>
+                <!-- FIN DE FILA INPUT Y BUSCAR CLIENTE -->
+
+                <!-- FILA DE DATOS DEL CLIENTE -->
+                <div class="row">
+                    <div class="col-md-12" id="datosdelcliente">
+
+                    </div>
+                </div>
+                <!-- FIN DE FILA DATOS DEL CLIENTE -->
 
                 <div class="row">
                     <div class="col">
-                        <label class="form-label mt-4" for="fecha-despacho">Fecha de Despacho</label>
-                        <input class="form-control" type="date" id="fecha-despacho" name="fecha-despacho" placeholder="">
+                        <hr />
                     </div>
+                </div>
 
-                    <div class="col">
-                        <label class="form-label mt-4" for="correlativo-despacho">Correlativo de Despacho</label>
-                        <input class="form-control" type="text" id="correlativo-despacho" name="correlativo-despacho" placeholder="">
-                    </div>
+                <!-- FILA DE BUSQUEDA DE PRODUCTOS -->
 
-    </div>
+                <!-- FILA DE DETALLES DE LA VENTA -->
+                <div class="row">
+                    <div class="col-md-12">
+                        <table class="table table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th>X</th>
+                                    <th style="display:none">Id</th>
+                                    <th>Correlativo</th>
+                                    <th>Producto</th>
+                                    <th>Cantidad</th>
+                                    <th>Seriales</th>
+                                    <th>Lote</th>
+                                </tr>
+                            </thead>
+                            <tbody id="detalledeventa">
 
-
- <!-- MODAL AÑADIR PRODUCTO -->
-        <section>
-            <div class="contenedor_texto">
-                <a href="#" class="cta">AGREGAR PRODUCTO</a>
-            </div>
-        </section>
-
-        <div class="modal_container2">
-                <div class="modal1 modal_close">
-                    <p class="close">X</p>
-                    <div class="modal_textos">
-                        <table class="table table-striped" id="lista-agregados">
-                            <tr>
-                                <td class="padding15izquierdos">Presione en el Producto para Agregarlo</td>
-                            </tr>
-                            <tr>
-                                <td>Producto Ejemplo N° 1</td>
-                            </tr>
-                            <tr>
-                                <td>Producto Ejemplo N° 2</td>
-                            </tr>
+                            </tbody>
                         </table>
                     </div>
-                </div> 
-        </div>
-<!--FIN DE MODAL AÑADIR PRODUCTO-->       
-
-
-
-
-            <div class="col-12" id="lista-recepcion">
-            <table class="table table-striped" id="lista-agregados">
-                    <tr>
-                        <td>Nombre Producto</td>
-                        <td>Serial</td>
-                        <td>Lote</td>
-                        <td>Botones</td>
-                    </tr>
-                    <tr>
-                        <td>Producto Ejemplo</td>
-                        <td><input class="form-control" type="text" id="serial" name="serial" placeholder=""></td>
-                        <td><input class="form-control" type="text" id="lote" name="lote" placeholder=""></td>
-                        <td><button type="button" class="btn2" onclick="eliminalineadetalle(this)">X</button></td>
-                    </tr>
-            </table>
-
-            </div>
                 </div>
-       
+                <!-- FIN DE FILA DETALLES DE LA VENTA -->
             </div>
-
-
-        
-	</div>
-
-	<div role="tabpanel" class="tab-pane" id="detalles">
-		<div class="container-tab">
-        
-
-        
-
-        <div class="col-10 text-right" id="total"></div>
-			<hr>
-                    
-                   
-                </div>
-         
-    </div>
-                <div class="row">
-                        <div class="col">
-                            <button class="btn" name="registro-despacho" type="submit">Registrarse</button>
-                        </div>
-                    </div>
-
-    </div> 
-    </form>
-    </div>
-        <!--== FIN DEL CONTENIDO ==-->
-
-
-        <!--== LISTADO DE CONSULTA ==-->
-        <form action="" method="POST">
-        <div class="table-container ">
-            <h1 class="titulo-tabla display-5 text-center">LISTA DE DESPACHOS</h1>
-            <table class="tabla">
-                <thead>
-                    <tr>
-                        <th>#</th>
-                        <!-- <th>Cliente/Entrega</th> -->
-                        <th>Fecha de Despacho</th>
-                        <th>Correlativo</th>
-                    </tr>
-                </thead>
-                <tbody>
-                <?php foreach ($despacho->consultar() as $row) { ?>
-                    <?php if ($row['activo'] == 1) { ?>
-                        <tr>
-                            <td data-label="#">
-                            <button class="btn btn-eliminar" type="submit" name="eliminar-despacho" value="<?php echo $row['id_despachos']; ?>">Eliminar</button>
-                            <br>
-                            <button class="btn btn-modificar" type="button" data-bs-toggle="modal" data-bs-target="#modal-<?php echo $row['id_despachos']; ?>">Modificar</button>
-                            </td>
-                           
-                            <td><?php echo $row['fecha_despacho']; ?></td>
-                            <td><?php echo $row['correlativo']; ?></td>
-            
-                        </tr>
-
-        <!-- MODAL -->
-        <div class="modal fade" id="modal-<?php echo $row['id_despachos']; ?>" tabindex="-1">
-                        <div class="modal-dialog">
-                            <div class="modal-content">
-
-                                <div class="modal-header">
-                                    <h5 class="modal-title">Modificar Despachos</h5>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                </div>
-
-                                <div class="modal-body">
-                                <div class="row mb-3">
-                                    <label for="cantidad-recepcion" class="col-sm-2 col-form-label">Cantidad</label>
-                                    <div class="col-sm-10">
-                                        <input type="text" value="<?php echo $row['cantidad']; ?>" name="cantidad-despacho" class="form-control">
-                                    </div>
-                                </div>
-
-                                <div class="row mb-3">
-                                    <label for="fecha-recepcion" class="col-sm-2 col-form-label">Fecha</label>
-                                    <div class="col-sm-10">
-                                        <input type="date" value="<?php echo $row['fecha_despacho']; ?>" name="fecha-despacho" class="form-control">
-                                    </div>
-                                 </div>
-
-                                <div class="row mb-3">
-                                    <label for="correlativo_recepcion" class="col-sm-2 col-form-label">Correlativo</label>
-                                    <div class="col-sm-10">
-                                        <input type="text" value="<?php echo $row['correlativo']; ?>" name="correlativo-despacho" class="form-control">
-                                    </div>
-                                </div>
-
-                        </div>
-
-
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-cerrar" data-bs-dismiss="modal">Cerrar</button>
-                        <button class="btn btn-modificar" type="submit" name="modificar" value="<?php echo $row['id_despachos']; ?>">Modificar</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- FIN DEL MODAL -->
-
-
-                        <?php } ?>
-                <?php } ?>
-             
-                </tbody>
-            </table>
-
-            <div class="row">
-                        <div class="col">
-                            <button class="btn" name="" type="submit">Generar Reporte</button>
-                        </div>
-                    </div>
-        </div>
         </form>
+    </div> <!-- fin de container -->
 
-                
+
+    <!-- seccion del modal clientes -->
+    <div class="modal fade" tabindex="-1" role="dialog" id="modalclientes">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-header text-light bg-info">
+                <h5 class="modal-title">Listado de clientes</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-content">
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th style="display:none">Id</th>
+                            <th>Nombre</th>
+                            <th>Rif</th>
+                        </tr>
+                    </thead>
+                    <tbody id="listadoclientes">
+
+                    </tbody>
+                </table>
+            </div>
+            <div class="modal-footer bg-light">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+    <!--fin de seccion modal-->
+
+    <!-- seccion del modal productos -->
+    <div class="modal fade" tabindex="-1" role="dialog" id="modalproductos">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-header text-light bg-info">
+                <h5 class="modal-title">Listado de Productos</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-content">
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th style="display:none">Id</th>
+                            <th>Nombre</th>
+                            <th>Stock Actual</th>
+                        </tr>
+                    </thead>
+                    <tbody id="listadoproductos">
+
+                    </tbody>
+                </table>
+            </div>
+            <div class="modal-footer bg-light">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+    <!--fin de seccion modal-->
+    <script src="Javascript/despacho.js"></script>
 
 
-        <script src="public/bootstrap/js/sidebar.js"></script>
-  <script src="public/bootstrap/js/bootstrap.bundle.min.js"></script>
-  <script src="public/js/jquery-3.7.1.min.js"></script>
-  <script src="public/js/jquery.dataTables.min.js"></script>
-  <script src="public/js/dataTables.bootstrap5.min.js"></script>
-  <script src="public/js/datatable.js"></script>
-  <script src="public/js/sweetalert2.js"></script>
+
+
+    <?php include 'footer.php'; ?>
 </body>

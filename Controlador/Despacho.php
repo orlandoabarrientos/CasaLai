@@ -1,70 +1,34 @@
 <?php
-require_once 'Modelo/Despacho.php';
 
-$despacho = new Despacho();
-
-if (isset($_POST['registro-despacho'])){
-
-    $despacho->setCantidad($_POST['cantidad-despacho']);
-    $despacho->setFecha_despacho($_POST['fecha-despacho']);
-    $despacho->setCorrelativo($_POST['correlativo-despacho']);
-   
-
-    if($despacho->registrar()) {
-        $alert = '<div class="alert alert-primary alert-dismissible fade show" role="alert">' . "SE REGISTRO!!" . '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>';
-    } else {
-        $alert = '<div class="alert alert-danger alert-dismissible fade show" role="alert">' . "NO SE REGISTRO!" . '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>';
-    }
-}
-
-if (isset($_POST['eliminar-despacho'])) {
-    if ($despacho->eliminar_l($_POST['eliminar-despacho'])) {
-        $alert = '<div class="alert alert-primary alert-dismissible fade show" role="alert">SE ELIMINO EL REGISTRO!!<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>';
-    } else {
-        $alert = '<div class="alert alert-danger alert-dismissible fade show" role="alert">NO SE PUDO ELIMINAR EL REGISTRO!!<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>';
-    }
-}
-
-
+if (!is_file("modelo/" . $pagina . ".php")) {
  
-if (isset($_POST['modificar'])) {
-    $despacho->setId_despacho($_POST['modificar']);
-    $despacho->setCantidad($_POST['cantidad-despacho']);
-    $despacho->setFecha_despacho($_POST['fecha-despacho']);
-    $despacho->setCorrelativo($_POST['correlativo-despacho']);
-    
+    echo "Falta definir la clase " . $pagina;
+    exit;
+}
+require_once("modelo/" . $pagina . ".php");
+if (is_file("vista/" . $pagina . ".php")) {
 
-    if ($despacho->actualizar()) {
-        $alert = '<div class="alert alert-primary alert-dismissible fade show" role="alert">SE ACTUALIZARON LOS DATOS!!<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>';
-    } else {
-        $alert = '<div class="alert alert-danger alert-dismissible fade show" role="alert">NO SE PUDO ACTUALIZAR LOS DATOS!!<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>';
+    if (!empty($_POST)) {
+
+        $o = new Despacho();
+        $accion = $_POST['accion'];
+        if ($accion == 'listadoclientes') {
+            $respuesta = $o->listadoclientes();
+            echo json_encode($respuesta);
+        } elseif ($accion == 'listadoproductos') {
+            $respuesta = $o->listadoproductos();
+            echo json_encode($respuesta);
+        } elseif ($accion == 'Despacho') {
+            $respuesta = $o->registrar($_POST['id_cliente'], $_POST['idp'], $_POST['cant'], $_POST['id_correlativo'], $_POST['id_lote'], $_POST['id_producto'], $_POST['id_cliente']);
+            echo json_encode($respuesta);
+        }
+        exit;
     }
+    $o2 = new Despacho();
+    $lotes = $o2->obtenerlotes();
+    $clientes = $o2->obtenercliente();
+
+    require_once("vista/" . $pagina . ".php");
+} else {
+    echo "pagina en construccion";
 }
-function obtenerClienteLista() {
-    $clienteModel = new Despacho();
-    return $clienteModel->obtenerClienteLista();
-}
-
-function obtenerLote() {
-    $loteModel = new Despacho();
-    return $loteModel->obtenerLote();
-}
-
-function obtenerSerial() {
-    $serialModel = new Despacho();
-    return $serialModel->obtenerSerial();
-}
-
-function obtenerProductos() {
-    $producto = new Despacho();
-    return $producto->obtenerProductos();
-}
-
-$productos = obtenerProductos();
-$clientes = obtenerClienteLista();
-$lotes = obtenerLote();
-$seriales = obtenerSerial();
-
-
-
-require_once "Vista/Despacho.php";

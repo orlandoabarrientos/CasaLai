@@ -1,173 +1,127 @@
 <?php
+
 require_once 'Modelo/config.php';
 
-class Despacho extends BD {
-    
-    private $conex;
-    private $id_despachos;
-    private $id_clientes;
-    private $cantidad;
-    private $fecha_despacho;
-    private $correlativo;
-    private $activo=1;
-    private $tableProductos = 'tbl_productos';
-    private $tableModelos = 'tbl_modelos';
 
 
-  
+class Despacho extends BD
+{
 
-    function __construct() {
-        parent::__construct();
-        $this->conex = parent::conexion();
-    }
+    function registrar($id_clientes, $id_producto, $cantidad, $correlativo, $id_lote)
+    {
+        $co = $this->conexion();
+        $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $r = array();
+        try {
 
-    // Getters y Setters
+            $guarda = $co->query("INSERT INTO tbl_despacho(cantidad, id_clientes, correlativo)
+		    values ('$cantidad','$id_clientes','$correlativo')");
+            $lid = $co->lastInsertId(); 
 
-    public function getId_despacho() {
-        return $this->id_despachos;
-    }
+            $tamano = count($id_producto);
 
-    public function setId_despacho($id_despachos) {
-        $this->id_despachos = $id_despachos;
-    }
-    public function getId_cliente() {
-        return $this->id_clientes;
-    }
-
-    public function setId_cliente($id_clientes) {
-        $this->id_clientes = $id_clientes;
-    }
-
-    public function getCantidad() {
-        return $this->cantidad;
-    }
-
-    public function setCantidad($cantidad) {
-        $this->cantidad = $cantidad;
-    }
-
-    public function getFecha_despacho() {
-        return $this->fecha_despacho;
-    }
-
-    public function setFecha_despacho($fecha_despacho) {
-        $this->fecha_despacho = $fecha_despacho;
-    }
-
-    public function getCorrelativo() {
-        return $this->correlativo;
-    }
-
-    public function setCorrelativo($correlativo) {
-        $this->correlativo = $correlativo;
-    }
-
-    
-
-     // Método para guardar el proveedor
-
-    function registrar() {
-        $sql = "INSERT INTO tbl_despachos(cantidad, fecha_despacho, correlativo, activo) 
-        VALUES(:Cantidad, :Fecha_despacho, :Correlativo, :activo)";
-
-        $conexion = $this->conex->prepare($sql);
-
-        $conexion->bindParam(':Cantidad', $this->cantidad);
-        $conexion->bindParam(':Fecha_despacho', $this->fecha_despacho);
-        $conexion->bindParam(':Correlativo', $this->correlativo);
-        $conexion->bindParam(':activo', $this->activo);
-
-        return $conexion->execute();
-
-    }
-
-    function consultar() {
-        $sql = "SELECT * FROM tbl_despachos";
-        $conexion = $this->conex->prepare($sql);
-        $conexion->execute();
-        $registros = $conexion->fetchAll(PDO::FETCH_ASSOC);
-        return $registros;
-    }
-
-    //modificar
-    function actualizar() {
-        $sql = "UPDATE tbl_despachos SET cantidad = :Cantidad, fecha_despacho = :Fecha_despacho, correlativo = :Correlativo  WHERE id_despachos= :Id_despacho";
-
-        $conexion = $this->conex->prepare($sql);
-        $conexion->bindParam(':Id_despacho', $this->id_despachos);
-        $conexion->bindParam(':Cantidad', $this->cantidad);
-        $conexion->bindParam(':Fecha_despacho', $this->fecha_despacho);
-        $conexion->bindParam(':Correlativo', $this->correlativo);
-
-
-        return $conexion->execute();
-    }
-
-    // Método para eliminación lógica
-    function eliminar_l($id_despacho1) {
-        $sql = "UPDATE tbl_despachos SET activo = 0 WHERE id_despachos = :id_despacho1";
-        $conexion = $this->conex->prepare($sql);
-        $conexion->bindParam(':id_despacho1', $id_despacho1);
-        return $conexion->execute();
-    }
-
-    public function obtenerClienteLista() {
-        $query = "SELECT id_clientes, nombre FROM tbl_clientes";
-        $stmt = $this->conex->query($query);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    }
-
-    public function obtenerLote() {
-        $query = "SELECT id_lote, lote FROM tbl_lotes";
-        $stmt = $this->conex->query($query);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    }
-
-    public function obtenerSerial() {
-        $query = "SELECT id_serial, `serial` FROM tbl_seriales";
-        $stmt = $this->conex->query($query);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    }
-
-
-    public function obtenerProductos() {
-       
-        $queryProductos = 'SELECT id_producto, nombre_p, stock_actual, id_modelo, codigo FROM ' . $this->tableProductos . ' WHERE Activo = 1';
-       
-        $stmtProductos = $this->conex->prepare($queryProductos);
-        $stmtProductos->execute();
-        $productos = $stmtProductos->fetchAll(PDO::FETCH_ASSOC);
-        $idsModelos = array_column($productos, 'id_modelo');
-        $idsModelos = array_unique($idsModelos);
-
-        if (!empty($idsModelos)) {
-            $idsModelos = implode(',', $idsModelos);
-
-            $queryModelos = 'SELECT id_modelo, descripcion_mo FROM ' . $this->tableModelos . ' WHERE id_modelo IN (' . $idsModelos . ')';
-
-            $stmtModelos = $this->conex->prepare($queryModelos);
-            $stmtModelos->execute();
-            $modelos = $stmtModelos->fetchAll(PDO::FETCH_ASSOC);
-            $descripcionModelos = [];
-            foreach ($modelos as $modelo) {
-                $descripcionModelos[$modelo['id_modelo']] = $modelo['descripcion_mo'];
+            for ($i = 0; $i < $tamano; $i++) {
+                $gd = $co->query("INSERT INTO `tbl_detalle_despacho`
+			   (id_lote, id_producto, id_despacho)
+			   values('$id_lote[$i]',
+               '$id_producto[$i]'
+               )");
             }
-            foreach ($productos as &$producto) {
-                if (isset($descripcionModelos[$producto['id_modelo']])) {
-                    $producto['descripcion_mo'] = $descripcionModelos[$producto['id_modelo']];
-                } else {
-                    $producto['descripcion_mo'] = null;
+            $r['resultado'] = 'registrar';
+            $r['mensaje'] =  "Se registro correctamente";
+        } catch (Exception $e) {
+            $r['resultado'] = 'error';
+            $r['mensaje'] =  $e->getMessage();
+        }
+        return $r;
+    }
+
+
+    function listadoclientes()
+    {
+        $co = $this->conexion();
+        $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $r = array(); 
+        try {
+            $resultado = $co->query("SELECT * FROM tbl_clientes");
+            $respuesta = '';
+            if ($resultado) {
+                foreach ($resultado as $r) {
+                    $respuesta = $respuesta . "<tr style='cursor:pointer' onclick='colocacliente(this);'>";
+                    $respuesta = $respuesta . "<td style='display:none'>";
+                    $respuesta = $respuesta . $r['id_clientes'];
+                    $respuesta = $respuesta . "</td>";
+                    $respuesta = $respuesta . "<td>";
+                    $respuesta = $respuesta . $r['nombre'];
+                    $respuesta = $respuesta . "</td>";
+                    $respuesta = $respuesta . "<td>";
+                    $respuesta = $respuesta . $r['rif'];
+                    $respuesta = $respuesta . "</td>";
+                    $respuesta = $respuesta . "</tr>";
                 }
             }
-        } else {
-
-            foreach ($productos as &$producto) {
-                $producto['descripcion_mo'] = null;
-            }
+            $r['resultado'] = 'listadoclientes';
+            $r['mensaje'] =  $respuesta;
+        } catch (Exception $e) {
+            $r['resultado'] = 'error';
+            $r['mensaje'] =  $e->getMessage();
         }
-
-        return $productos;
+        return $r;
     }
 
-    
+    function listadoproductos()
+    {
+        $co = $this->conexion();
+        $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $r = array();
+        try {
+
+            $resultado = $co->query("SELECT * FROM tbl_productos");
+
+            if ($resultado) {
+
+                $respuesta = '';
+                foreach ($resultado as $r) {
+                    $respuesta = $respuesta . "<tr style='cursor:pointer' onclick='colocaproducto(this);'>";
+                    $respuesta = $respuesta . "<td style='display:none'>";
+                    $respuesta = $respuesta . $r['id_producto'];
+                    $respuesta = $respuesta . "</td>";
+                    $respuesta = $respuesta . "<td>";
+                    $respuesta = $respuesta . $r['nombre_p'];
+                    $respuesta = $respuesta . "</td>";
+                    $respuesta = $respuesta . "<td>";
+                    $respuesta = $respuesta . $r['stock'];
+                    $respuesta = $respuesta . "</td>";
+                    $respuesta = $respuesta . "</tr>";
+                }
+            }
+            $r['resultado'] = 'listadoproductos';
+            $r['mensaje'] =  $respuesta;
+        } catch (Exception $e) {
+            $r['resultado'] = 'error';
+            $r['mensaje'] =  $e->getMessage();
+        }
+
+        return $r;
+    }
+
+    public function obtenerlotes()
+    {
+        $co = $this->Conexion();
+        $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $p = $co->prepare("SELECT id_lote, lote FROM tbl_lotes ");
+        $p->execute();
+        $r = $p->fetchAll(PDO::FETCH_ASSOC);
+        return $r;
+    }
+    public function obtenercliente()
+    {
+        $co = $this->Conexion();
+        $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $p = $co->prepare("SELECT id_clientes, nombre FROM tbl_clientes ");
+        $p->execute();
+        $r = $p->fetchAll(PDO::FETCH_ASSOC);
+        return $r;
+    }
+   
 }
