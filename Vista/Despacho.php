@@ -12,7 +12,6 @@ require_once 'Controlador/Despacho.php';
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <?php include 'header.php'; ?>
-    <!-- <link rel="stylesheet" href="Styles/darckort.css">-->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <title>Gestionar Despachos</title>
 </head>
@@ -59,25 +58,13 @@ require_once 'Controlador/Despacho.php';
                         <div class="col">
                             <hr />
                         </div>
-                    </div>
-                    <div class="col-md-4">
-                        <label for="lote">Lotes</label>
-                        <select class="form-select" name="lote" id="lote">
-                            <option value='disabled'  
-                                disabled selected>Seleccione un lote</option>
-                            <?php
-                            foreach ($lotes as $lote) {
-                                echo "<option value='" . $lote['id_lote'] . "'>" . $lote['lote'] . "</option>";
-                            }
-                            ?>
-                        </select>
-                    </div>
-                    <div class="col-md-4">
+                    </div>              
+                    <div class="col-md-6">
                         <label for="correlativo">Correlativo</label>
                         <input class="form-control" type="text" id="correlativo" name="correlativo" />
                     </div>
 
-                    <div class="col-md-4">
+                    <div class="col-md-6">
                         <label for="cliente">Clientes</label>
                         <select class="form-select" name="cliente" id="cliente">
                             <option value='disabled'  
@@ -116,14 +103,13 @@ require_once 'Controlador/Despacho.php';
                                 <tr>
                                     <th>X</th>
                                     <th style="display:none">Id</th>
-                                    <th>Correlativo</th>
+                                    <th>Nombre</th>
                                     <th>Producto</th>
                                     <th>Cantidad</th>
-                                    <th>Seriales</th>
-                                    <th>Lote</th>
+                                
                                 </tr>
                             </thead>
-                            <tbody id="detalledeventa">
+                            <tbody id="detalle_despacho">
 
                             </tbody>
                         </table>
