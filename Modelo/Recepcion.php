@@ -1,129 +1,98 @@
 <?php
 require_once 'Modelo/datos.php';
 
-class Recepcion extends conexion{
-    
-    private $conex;
-    private $id_proveedor;
-    private $id_recepcion;
-    private $cantidad;
-    private $fecha_recepcion;
+class Recepcion extends Conexion{
+    private $idproveedor;
     private $correlativo;
-    private $activo=1;
-    private $tableProductos = 'tbl_productos';
-    private $tableModelos = 'tbl_modelos';
-
-  
-
-    function __construct() {
-        $this->conex = parent::conecta();
+    private $desc;
+    public function getidproveedor() {
+        return $this->idproveedor;
     }
 
-    // Getters y Setters
-
-    public function getId_Recepcion() {
-        return $this->id_recepcion;
+   public function setidproveedor($idproveedor) {
+        $this->idproveedor = $idproveedor;
+    } 
+    public function getdesc() {
+        return $this->desc;
     }
 
-    public function setId_Recepcion($id_recepcion) {
-        $this->id_recepcion = $id_recepcion;
-    }
-    public function getId_Proveedor() {
-        return $this->id_proveedor;
-    }
-
-    public function setId_Proveedor($id_proveedor) {
-        $this->id_proveedor = $id_proveedor;
-    }
-
-    public function getCantidad() {
-        return $this->cantidad;
-    }
-
-    public function setCantidad($cantidad) {
-        $this->cantidad = $cantidad;
-    }
-
-    public function getFecha_Recepcion() {
-        return $this->fecha_recepcion;
-    }
-
-    public function setFecha_Recepcion($fecha_recepcion) {
-        $this->fecha_recepcion = $fecha_recepcion;
-    }
-
-    public function getCorrelativo() {
+   public function setdesc($desc) {
+        $this->desc = $desc;
+    } 
+    public function getcorrelativo() {
         return $this->correlativo;
     }
 
-    public function setCorrelativo($correlativo) {
+    public function setcorrelativo($correlativo) {
         $this->correlativo = $correlativo;
     }
-
+	public function registrar($idproducto, $cantidad) {
+        $d = array();
+        if (!$this->buscar()) {  // Asegúrate de que `buscar()` esté bien definido
+            $co = $this->conecta();  // Asegúrate de que `conecta()` esté bien definido y retorne una conexión válida
+            $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+            
+            try {
+                // Insertar en tbl_recepcion_productos
+                $tiempo = date('Y-m-d');
     
-
-     // Método para guardar el proveedor
-
-    function registrar() {
-        $sql = "INSERT INTO tbl_recepcion_productos (cantidad, fecha_recepcion, correlativo, activo)
-                VALUES (:Cantidad, :Fecha_recepcion, :Correlativo, :activo)";
-
-        $conexion = $this->conex->prepare($sql);
-
-        $conexion->bindParam(':Cantidad', $this->cantidad);
-        $conexion->bindParam(':Fecha_recepcion', $this->fecha_recepcion);
-        $conexion->bindParam(':Correlativo', $this->correlativo);
-        $conexion->bindParam(':activo', $this->activo);
-
-        return $conexion->execute();
-
+                // Asegúrate de que `$this->idproveedor` y `$this->correlativo` estén definidos
+                $sql = "INSERT INTO tbl_recepcion_productos (id_proveedor, fecha_recepcion, correlativo) 
+                        VALUES (:idproveedor, :fecha_recepcion, :correlativo)";
+                
+                $stmt = $co->prepare($sql);
+                $stmt->bindParam(':idproveedor', $this->idproveedor, PDO::PARAM_INT);
+                $stmt->bindParam(':fecha_recepcion', $tiempo, PDO::PARAM_STR);
+                $stmt->bindParam(':correlativo', $this->correlativo, PDO::PARAM_STR);
+                $stmt->execute();
+                
+                $idRecepcion = $co->lastInsertId();
+                
+                $cap = count($idproducto);
+    
+                // Insertar en tbl_detalle_recepcion_productos
+                for ($i = 0; $i < $cap; $i++) {
+                    // Asegúrate de que `$this->desc` esté definido correctamente como una propiedad de la clase
+                    $sqlDetalle = "INSERT INTO tbl_detalle_recepcion_productos (id_recepcion, id_producto, descripcion_producto, cantidad) 
+                                   VALUES (:idRecepcion, :idProducto, :descripcion, :cantidad)";
+                    
+                    $stmtDetalle = $co->prepare($sqlDetalle);
+                    $stmtDetalle->bindParam(':idRecepcion', $idRecepcion, PDO::PARAM_INT);
+                    $stmtDetalle->bindParam(':idProducto', $idproducto[$i], PDO::PARAM_INT);
+                    $stmtDetalle->bindParam(':descripcion', $this->desc, PDO::PARAM_STR);  // Define $this->desc antes
+                    $stmtDetalle->bindParam(':cantidad', $cantidad[$i], PDO::PARAM_INT);
+                    $stmtDetalle->execute();
+                }
+    
+                $d['resultado'] = 'registrar';
+                $d['mensaje'] = 'Se registró la nota de entrada correctamente';
+            } catch (Exception $e) {
+                $d['resultado'] = 'error';
+                $d['mensaje'] = $e->getMessage();
+            }
+        } else {
+            $d['resultado'] = 'registrar';
+            $d['mensaje'] = 'El número correlativo ya existe!';
+        }
+        return $d;
+    }
+    
+    
+	
+	
+	public function obtenerproveedor(){
+        $co = $this->conecta();
+        $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $p = $co->prepare("SELECT id_proveedor,nombre FROM tbl_proveedores ");
+        $p->execute();
+        $r = $p->fetchAll(PDO::FETCH_ASSOC);
+        return $r;
     }
 
-    function consultar() {
-        $sql = "SELECT * FROM tbl_recepcion_productos";
-        $conexion = $this->conex->prepare($sql);
-        $conexion->execute();
-        $registros = $conexion->fetchAll(PDO::FETCH_ASSOC);
-        return $registros;
-    }
 
-    // Método para listar proveedores
-    public function obtenerProveedorLista() {
-        $query = "SELECT id_proveedor, nombre FROM tbl_proveedores";
-        $stmt = $this->conex->query($query);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    }
-
-    //modificar
-    function actualizar() {
-        $sql = "UPDATE tbl_recepcion_productos SET cantidad = :Cantidad, fecha_recepcion = :Fecha_recepcion, correlativo = :Correlativo  WHERE id_recepcion= :Id_recepcion";
-
-        $conexion = $this->conex->prepare($sql);
-        $conexion->bindParam(':Id_recepcion', $this->id_recepcion);
-        $conexion->bindParam(':Cantidad', $this->cantidad);
-        $conexion->bindParam(':Fecha_recepcion', $this->fecha_recepcion);
-        $conexion->bindParam(':Correlativo', $this->correlativo);
-
-
-        return $conexion->execute();
-    }
-
-    // Método para eliminación lógica
-    function eliminar_l($id_recepcion1) {
-        $sql = "UPDATE tbl_recepcion_productos SET activo = 0 WHERE id_recepcion = :id_recepcion1";
-        $conexion = $this->conex->prepare($sql);
-        $conexion->bindParam(':id_recepcion1', $id_recepcion1);
-        return $conexion->execute();
-    }
-
-    function eliminar() {
-        $sql = "DELETE FROM tbl_recepcion_productos WHERE id_recepcion = :id_recepcion1";
-        $conexion = $this->conex->prepare($sql);
-        $conexion->bindParam(':Id_recepcion', $this->id_recepcion);
-        return $conexion->execute();
-    }
-
-    function listadoproductos(){
+	
+	
+	function listadoproductos(){
 		$co = $this->conecta();
 		$co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 		$r = array();
@@ -145,15 +114,12 @@ class Recepcion extends conexion{
 						$respuesta = $respuesta."<td>";
 							$respuesta = $respuesta.$r['nombre_p'];
 						$respuesta = $respuesta."</td>";
-						$respuesta = $respuesta."<td>";
-							$respuesta = $respuesta.$r['stock_actual'];
-						$respuesta = $respuesta."</td>";
 					$respuesta = $respuesta."</tr>";
 				}
 				
 			    
 			}
-			$r['resultado'] = 'listadoproductos';
+			$r['resultado'] = 'listado';
 			$r['mensaje'] =  $respuesta;
 			
 		}catch(Exception $e){
@@ -164,4 +130,44 @@ class Recepcion extends conexion{
 		return $r;
 		
 	}
+
+	// function consultar() {
+    //     $sql = "SELECT * FROM tbl_dellate_recepcion_producto";
+    //     $conexion = $this->conex->prepare($sql);
+    //     $conexion->execute();
+    //     $registros = $conexion->fetchAll(PDO::FETCH_ASSOC);
+    //     return $registros;
+    // }
+
+	function buscar() {
+        $co = $this->conecta();
+        $co->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $r = array();
+        try {
+            // Preparar la consulta para buscar el número de factura en tbl_recepcion_productos
+            $stmt = $co->prepare("SELECT * FROM tbl_recepcion_productos WHERE correlativo = :correlativo");
+            $stmt->execute(['correlativo' => $this->correlativo]);
+            
+            // Obtener los resultados
+            $fila = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            // Verificar si se encontró un resultado
+            if ($fila) {
+                $r['resultado'] = 'encontro';
+                $r['mensaje'] = 'El número de el correlativo ya existe!';
+            } 
+        } catch (Exception $e) {
+            $r['resultado'] = 'error';
+            $r['mensaje'] = $e->getMessage();
+        }
+        return $r;
+    }
+    
+
+	
+
+	
 }
+
+
+?>

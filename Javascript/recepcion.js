@@ -1,44 +1,116 @@
+
 $(document).ready(function(){
-    // Si estoy aca es porque la 
-    // vista cargo correctamente por lo que ahora
-    // debo sacar de la base de datos los elementos que se mostraran
-    
-    // Cargar la lista de clientes
-    //carga la lista de productos
-        carga_productos();
-        
-    //boton para levantar modal de clientes
+    // Si estoy aca es porque l
+    carga_productos();
     
     //boton para levantar modal de productos
-    $("#listadodeproductos").on("click",function(){
-        $("#modalproductos").modal("show");
+    $("#listado").on("click",function(){
+        $("#modalp").modal("show");
     });
     
     
-   	
+    $("#correlativo").on("keypress",function(e){
+        validarkeypress(/^[0-9-\b]*$/,e);
+    });
+    
+    $("#correlativo").on("keyup",function(){
+        validarkeyup(/^[1-9]{4,10}$/,$(this),
+        $("#scorrelativo"),"Se permite de 4 a 10 carácteres");
+        if ($("#correlativo").val().length <= 9) {
+			var datos = new FormData();
+			datos.append('accion', 'buscar');
+			datos.append('correlativo', $(this).val());
+			enviaAjax(datos);
+		}
+    });
+
+    $("#descripcion").on("keypress", function (e) {
+        validarkeypress(/^[A-Za-z0-9,#\b\s\u00f1\u00d1\u00E0-\u00FC-]*$/, e);
+      });
+    
+      $("#descripcion").on("keyup", function () {
+        validarkeyup(
+          /^[A-Za-z0-9,#\b\s\u00f1\u00d1\u00E0-\u00FC-]{1,200}$/,
+          $(this),
+          $("#sdescripcion"),
+          "No debe estar vacío y se permite un máximo 200 carácteres"
+        );
+      });
     
     //evento keyup de input codigoproducto
     $("#codigoproducto").on("keyup",function(){
         var codigo = $(this).val();
-        $("#listadoproductos tr").each(function(){
+        $("#listadop tr").each(function(){
             if(codigo == $(this).find("td:eq(1)").text()){
                 colocaproducto($(this));
             }
         });
     });	
     
-    //evento click de boton facturar
-   
+    //evento click de boton registrar
+    $("#registrar").on("click",function(){
+         if (validarenvio()){
+            if(verificaproductos()){
+            $('#accion').val('registrar');
+    
+                var datos = new FormData($('#f')[0]);
+                
+                $('#proveedor').change(function() {
+                    var valor = $(this).val();
+                    datos.append('proveedor', valor); });
+                datos.append("descripcion", $("#descripcion").val());
+    
+                enviaAjax(datos);
+                } else{
+                muestraMensaje("info",4000,"Debe colocar algun producto");
+            }
+          } 
+           
+            
+        
+    });
         
         
     });
+
+    function validarenvio(){
+        
+        var proveedorseleccionado = $("#proveedor").val();
+        if (proveedorseleccionado === null || proveedorseleccionado === "0") {
+            muestraMensaje("info",4000,"Por favor, seleccione un proveedor!"); 
+            return false;
+        }
+        else if(validarkeyup(/^[1-9]{4,10}$/,$("#correlativo"),
+            $("#scorrelativo"),"Se permite de 4 a 10 carácteres")==0){
+            muestraMensaje("info",4000,"el correlativo debe coincidir con el formato");
+                           
+            return false;					
+        } else if (
+            validarkeyup(
+                /^[A-Za-z0-9,#\b\s\u00f1\u00d1\u00E0-\u00FC-]{1,200}$/,
+                $("#descripcion"),
+                $("#sdescripcion"),
+                "No debe contener más de 200 carácteres"
+            ) == 0
+        ) {
+            muestraMensaje(
+                "error",
+                4000,
+                "ERROR!",
+               
+                    "No debe estar vacío, ni contener más de 200 carácteres"
+            );
+            return false;
+        }
+        return true;
+    }
     
     function carga_productos(){
         
         
         var datos = new FormData();
         
-        datos.append('accion','listadoproductos'); //le digo que me muestre un listado de aulas
+        datos.append('accion','listado'); //le digo que me muestre un listado de aulas
         
         enviaAjax(datos);
     }
@@ -46,23 +118,31 @@ $(document).ready(function(){
     //function para saber si selecciono algun productos
     function verificaproductos(){
         var existe = false;
-        if($("#detalledeventa tr").length > 0){
+       
+        if($("#recepcion1 tr").length > 0){
             existe = true;
+            
         }
+      
         return existe;
     }
-    //fin de verificar si selecciono procductos
+    function borrar(){
+        $("#correlativo").val('');
+        $("#proveedor").val("disabled");
+        $("#recepcion1 tr").remove();
+        $("#descripcion").val('');
+        
+        }
+
     
-    //function para buscar si existe el cliente 
+//funcion para colocar los productos
     
-    //fin de funcion existecliente
     
-    //funcion para colocar los productos
     function colocaproducto(linea){
         var id = $(linea).find("td:eq(0)").text();
         var encontro = false;
         
-        $("#detalledeventa tr").each(function(){
+        $("#recepcion1 tr").each(function(){
             if(id*1 == $(this).find("td:eq(1)").text()*1){
                 encontro = true
                 var t = $(this).find("td:eq(4)").children();
@@ -75,10 +155,10 @@ $(document).ready(function(){
             var l = `
               <tr>
                <td>
-               <button type="button" class="btn btn-primary" onclick="eliminalineadetalle(this)">X</button>
+               <button type="button" class="" onclick="borrarp(this)">Eliminar</button>
                </td>
                <td style="display:none">
-                   <input type="text" name="idp[]" style="display:none"
+                   <input type="text" name="producto[]" style="display:none"
                    value="`+
                         $(linea).find("td:eq(0)").text()+
                    `"/>`+	
@@ -91,52 +171,42 @@ $(document).ready(function(){
                         $(linea).find("td:eq(2)").text()+
                `</td>
                <td>
-                  <input type="text" value="1" name="cant[]" onkeyup="modificasubtotal(this)"/>
+                  <input type="text" value="1" name="cantidad[]" "/>
                </td>
-               <td>
-                   <input type="text" name="pvp[]" style="display:none"
-                   value="`+
-                        $(linea).find("td:eq(4)").text()+
-                   `"/>`+
-                        $(linea).find("td:eq(4)").text()+
-               `</td>
-               <td>`+
-                        redondearDecimales($(linea).find("td:eq(4)").text()*1,2)+
-               `</td>
+               
+               
                </tr>`;
-            $("#detalledeventa").append(l);
+            $("#recepcion1").append(l);
         }
     }
-    //fin de funcion colocar productos
     
-    
-    //funcion para modificar subtotal
-    function modificasubtotal(textocantidad){
-        var linea = $(textocantidad).closest('tr');
-        var valor = $(textocantidad).val()*1;
-        var pvp = $(linea).find("td:eq(5)").text()*1;
-        $(linea).find("td:eq(6)").text(redondearDecimales((valor*pvp),2));
-    }
+ 
     //fin de funcion modifica subtotal
-    
-    
-    //funcion para eliminar linea de detalle de ventas
-    function eliminalineadetalle(boton){
-        $(boton).closest('tr').remove();
-    }
-    // fin de funcion de eliminar linea
+ 
 
     
-    
+    //funcion para eliminar linea de detalle de ventas
+    function borrarp(boton){
+        $(boton).closest('tr').remove();
+    }
+
+
+    function muestraMensaje(icono,tiempo,titulo,mensaje){
+
+        Swal.fire({
+        icon:icono,
+        timer:tiempo,	
+        title:titulo,
+        html:mensaje,
+        showConfirmButton:true,
+        confirmButtonText:'Aceptar',
+        });
+    }
     
     //Funcion que muestra el modal con un mensaje
-    function muestraMensaje(mensaje){
-        $("#contenidodemodal").html(mensaje);
-                $("#mostrarmodal").modal("show");
-                setTimeout(function() {
-                        $("#mostrarmodal").modal("hide");
-                },5000);
-    }
+    
+    
+    
     
     
     //Función para validar por Keypress
@@ -161,6 +231,7 @@ $(document).ready(function(){
     function validarkeyup(er,etiqueta,etiquetamensaje,
     mensaje){
         a = er.test(etiqueta.val());
+       
         if(a){
             etiquetamensaje.text("");
             return 1;
@@ -172,10 +243,8 @@ $(document).ready(function(){
     }
     
     
-    function redondearDecimales(numero, decimales) {
-        return Number(Math.round(numero +'e'+ decimales) +'e-'+ decimales).toFixed(decimales);
-        
-    }
+    
+    
     function enviaAjax(datos){
         
         $.ajax({
@@ -193,50 +262,35 @@ $(document).ready(function(){
                 },
                 timeout:10000, //tiempo maximo de espera por la respuesta del servidor
                 success: function(respuesta) {//si resulto exitosa la transmision
-                    
+                    console.log(respuesta); 
                     try{
-                    // se usa try catch porque los datos que se
-                    // reciben vienen en formato json
-                    // por lo que se deben convertir en un arreglo 
-                    // asociativo para usarlos en javascript
-                    // si el json no esta bien formado, este paso genera un
-                    // error
+                
                     var lee = JSON.parse(respuesta);	
                     console.log(lee.resultado);
-                    if(lee.resultado=='listadoproductos'){
+                    
+                    if(lee.resultado=='listado'){
                         
-                        $('#listadoproductos').html(lee.mensaje);
+                        $('#listadop').html(lee.mensaje);
                     }
-                    else if(lee.resultado=='error'){
-                        muestraMensaje(lee.mensaje);
+                    else if(lee.resultado=='registrar'){
+                        muestraMensaje('success', 6000,'REGISTRAR', lee.mensaje);
+                        borrar();
+                    }else if (lee.resultado == "encontro") {		
+                        if (lee.mensaje == 'El numero de correlativo ya existe!') {
+                            muestraMensaje('success', 6000,'Atencion', lee.mensaje);
+                        }		
+                    }else if(lee.resultado=='error'){
+                        muestraMensaje('success', 6000,'Error',lee.mensaje);
                     }
                     
                 }
                 catch(e){
-                    alert("Error en JSON "+e.name+" !!!");
+                    console.log("Error en JSON"+e.name+" !!!");
                 }
-                  //cuanto termina el proceso ocultan el loader
                   
                 },
-                error: function(request, status, err){
-                    // si ocurrio un error en la trasmicion 
-                    // o recepcion via ajax entra aca
-                    // y se muestran los mensaje del error
-                    
-                    if (status == "timeout") {
-                        //pasa cuando superan los 10000 10 segundos de timeout
-                        muestraMensaje("Servidor ocupado, intente de nuevo");
-                    } else {
-                        //cuando ocurreo otro error con ajax
-                        muestraMensaje("ERROR: <br/>" + request + status + err);
-                    }
-                },
                 complete: function(){
-                    //Ocurre luego del succes
-                    // esta es la parte final del proceso de
-                    // trasmision recepcion y la puede usar para
-                    // ocultar un loader
-                    
+                
                 }
                 
             });
@@ -244,6 +298,4 @@ $(document).ready(function(){
     
         
     }
-
-//////////////////////////////////////////////////////////////MODALLLLLLLLLLLLLLLLL JUAAAAAAAAANNNNNNNNNNNN
-
+   
